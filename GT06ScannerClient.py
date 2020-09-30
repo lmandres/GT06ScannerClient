@@ -16,7 +16,7 @@ class GT06ScannerClient():
 
     def __init__(self):
         self.gt06Client = gt06Client.GT06Client(
-            "10.0.0.245", 5023
+            "gps_software_hostname", 5023
         )
         self.gpsScanner = gpsScanner.GPSScanner(
             "/dev/ttyUSB_GPS0", 4800
