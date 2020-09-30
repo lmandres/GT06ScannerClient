@@ -128,6 +128,7 @@ class GT06ScannerClient():
             gpsMessage = makeGPSMessageFromHash(
                 locationHash
             )
+            print("Scanning . . .")
             if gpsMessage:
                 self.gt06Client.sendGPSMessage(gpsMessage)
                 print(locationHash)
