@@ -81,3 +81,12 @@ source venv/bin/activate
 ```bash
 python runClient.py
 ```
+
+## Stopping the application
+
+* To stop the application, type Ctrl-C
+* If you sourced a virtual environment, you can deactivate the virtual environment by entering the following command:
+
+```bash
+deactivate
+```
