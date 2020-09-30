@@ -1,3 +1,5 @@
-config.xml
+
 __pycache__/
 venv/
+
+/config.xml
