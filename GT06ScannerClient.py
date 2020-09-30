@@ -103,7 +103,7 @@ class GT06ScannerClient():
 
                 courseOut1 = int(courseString, 2)
                 courseOut1 = courseOut1 << 10
-                courseOut2 = int(course)
+                courseOut2 = int(course) % 360
                 courseOut = courseOut1 | courseOut2
 
                 messageOut += "{:04x}".format(courseOut)
