@@ -1,5 +1,3 @@
-import codecs
-import socket
 import time
 
 import crc_itu
