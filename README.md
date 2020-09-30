@@ -22,7 +22,8 @@ The GT06ScannerClient relies on the following prerequisites:
 
 * In the installation directory run
 
-> git clone https://github.com/lmandres/GT06ScannerClient.git
-> cd GT06ScannerClient
-> git pull
-
+```bash
+git clone https://github.com/lmandres/GT06ScannerClient.git
+cd GT06ScannerClient
+git pull
+```
