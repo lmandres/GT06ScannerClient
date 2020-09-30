@@ -151,10 +151,3 @@ class GT06Client():
             return False
         else:
             return True
-
-if __name__ == "__main__":
-    gt06client = GT06Client("10.0.0.245", 5023)
-    gt06client.connect()
-    gt06client.sendLoginMessage("0123456789012345")
-    gt06client.sendGPSMessage("0b081d112e10cf027ac7eb0c46584900148f")
-    gt06client.disconnect()

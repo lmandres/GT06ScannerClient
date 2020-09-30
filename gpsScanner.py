@@ -193,15 +193,3 @@ class GPSScanner():
             pass
 
         return returnHash
-
-if __name__ == '__main__':
-
-    gpsScanner = GPSScanner("/dev/ttyUSB_GPS0", 4800)
-    gpsScanner.runLocate()
-    while True:
-        try:
-            print(gpsScanner.getLocationHash())
-            time.sleep(1)
-        except KeyboardInterrupt as ki:
-            break
-    gpsScanner.stopLocate()

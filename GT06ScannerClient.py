@@ -6,26 +6,36 @@ import crc_itu
 
 import gpsScanner
 import gt06Client
+import configReader
+
 
 class GT06ScannerClient():
 
+
     gt06Client = None
     gpsScanner = None
+    configReader = None
+
 
     imei = None
 
     def __init__(self):
+        self.configReader = configReader.ConfigReader("config.xml")
         self.gt06Client = gt06Client.GT06Client(
-            "gps_software_hostname", 5023
+            self.configReader.getGT06ServerHostname(),
+            self.configReader.getGT06ServerPort()
         )
         self.gpsScanner = gpsScanner.GPSScanner(
-            "/dev/ttyUSB_GPS0", 4800
+            self.configReader.getGPSDevicePort(),
+            self.configReader.getGPSDeviceBaud()
         )
 
     def connectDevices(self):
         self.gt06Client.connect()
         self.gpsScanner.runLocate()
-        self.gt06Client.sendLoginMessage("0123456789012345")
+        self.gt06Client.sendLoginMessage(
+            self.configReader.getScannerID()
+        )
 
     def runScannerClient(self):
 
@@ -123,20 +133,10 @@ class GT06ScannerClient():
             if gpsMessage:
                 self.gt06Client.sendGPSMessage(gpsMessage)
                 print(locationHash)
-            time.sleep(10)
+            time.sleep(
+                self.configReader.getGT06ServerUpdateDelay()
+            )
 
     def disconnectDevices(self):
         self.gpsScanner.stopLocate()
         self.gt06Client.disconnect()
-
-
-if __name__ == "__main__":
-
-    scanner = GT06ScannerClient()
-    try:
-        scanner.connectDevices()
-        scanner.runScannerClient()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        scanner.disconnectDevices()

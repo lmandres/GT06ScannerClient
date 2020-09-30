@@ -1,0 +1,12 @@
+<ScannerSettings>
+    <ScannerIDNumber>0123456789012345</ScannerIDNumber>
+    <GT06ClientSettings>
+        <Hostname>demo.traccar.org</Hostname>
+        <Port>5023</Port>
+        <UpdateDelay>10</UpdateDelay>
+    </GT06ClientSettings>
+    <GPSSettings>
+        <Port>/dev/ttyUSB0</Port>
+        <Baud>4800</Baud>
+    </GPSSettings>
+</ScannerSettings>
