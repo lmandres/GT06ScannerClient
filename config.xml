@@ -1,7 +1,8 @@
+<?xml version="1.0"?>
 <ScannerSettings>
     <ScannerIDNumber>0123456789012345</ScannerIDNumber>
     <GT06ClientSettings>
-        <Hostname>demo.traccar.org</Hostname>
+        <Hostname>10.0.0.245</Hostname>
         <Port>5023</Port>
         <UpdateDelay>10</UpdateDelay>
     </GT06ClientSettings>
