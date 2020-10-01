@@ -14,25 +14,58 @@ class GT06ScannerClient():
     gpsScanner = None
     configReader = None
 
+    scannerID = None
+    updateDelay = None
 
-    imei = None
+    def __init__(
+        self,
+        configFile="config.xml",
+        scannerIDIn=None,
+        serverAddressIn=None,
+        serverPortIn=None,
+        updateDelayIn=None,
+        gpsPortIn=None,
+        gpsBaudIn=None
+    ):
+        self.configReader = configReader.ConfigReader(configFile)
+        serverAddress = self.configReader.getGT06ServerHostname()
+        serverPort = int(self.configReader.getGT06ServerPort())
+        gpsPort = self.configReader.getGPSDevicePort()
+        gpsBaud = int(self.configReader.getGPSDeviceBaud())
+        self.scannerID = self.configReader.getScannerID()
+        self.updateDelay = int(self.configReader.getGT06ServerUpdateDelay())
 
-    def __init__(self):
-        self.configReader = configReader.ConfigReader("config.xml")
+        if serverAddressIn:
+            serverAddress = serverAddressIn
+        if serverPortIn:
+            serverPort = int(serverPortIn)
+
+        if gpsPortIn:
+            gpsPort = gpsPortIn
+        if gpsBaudIn:
+            gpsBaud = int(gpsBaudIn)
+
+        if scannerIDIn:
+            self.scannerID = scannerIDIn
+
+        if updateDelayIn:
+            self.updateDelay = int(updateDelayIn)
+
         self.gt06Client = gt06Client.GT06Client(
-            self.configReader.getGT06ServerHostname(),
-            self.configReader.getGT06ServerPort()
+            serverAddress,
+            serverPort
         )
+
         self.gpsScanner = gpsScanner.GPSScanner(
-            self.configReader.getGPSDevicePort(),
-            self.configReader.getGPSDeviceBaud()
+            gpsPort,
+            gpsBaud
         )
 
     def connectDevices(self):
         self.gt06Client.connect()
         self.gpsScanner.runLocate()
         self.gt06Client.sendLoginMessage(
-            self.configReader.getScannerID()
+            self.scannerID
         )
 
     def runScannerClient(self):
@@ -133,7 +166,7 @@ class GT06ScannerClient():
                 self.gt06Client.sendGPSMessage(gpsMessage)
                 print(locationHash)
             time.sleep(
-                self.configReader.getGT06ServerUpdateDelay()
+                self.updateDelay
             )
 
     def disconnectDevices(self):
