@@ -147,7 +147,7 @@ class GT06Client():
         except socket.timeout:
             pass
 
-        if self.makeBasicMessageResponse(1) != serverResp:
+        if self.makeBasicMessageResponse(16) != serverResp:
             return False
         else:
             return True
