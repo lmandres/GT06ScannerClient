@@ -47,6 +47,11 @@ if __name__ == "__main__":
         type=int,
         help="Baud speed for communication with GPS tracker module."
     )
+    parser.add_argument(
+        "-m",
+        "--maps_url",
+        help="URL for map tile server images."
+    )
     args = parser.parse_args()
     print(args)
     
@@ -57,7 +62,8 @@ if __name__ == "__main__":
         serverPortIn=args.server_port,
         updateDelayIn=args.update_delay,
         gpsPortIn=args.gps_port,
-        gpsBaudIn=args.gps_baud
+        gpsBaudIn=args.gps_baud,
+        mapsURLIn=args.maps_url
     )
     try:
         scanner.connectDevices()

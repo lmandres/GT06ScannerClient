@@ -1,18 +1,21 @@
+import datetime
 import time
 
 import crc_itu
 
+import configReader
+import displayLocation
 import gpsScanner
 import gt06Client
-import configReader
 
 
 class GT06ScannerClient():
 
 
+    configReader = None
+    displayLocation = None
     gt06Client = None
     gpsScanner = None
-    configReader = None
 
     scannerID = None
     updateDelay = None
@@ -25,13 +28,15 @@ class GT06ScannerClient():
         serverPortIn=None,
         updateDelayIn=None,
         gpsPortIn=None,
-        gpsBaudIn=None
+        gpsBaudIn=None,
+        mapsURLIn=None
     ):
         self.configReader = configReader.ConfigReader(configFile)
         serverAddress = self.configReader.getGT06ServerHostname()
         serverPort = int(self.configReader.getGT06ServerPort())
         gpsPort = self.configReader.getGPSDevicePort()
         gpsBaud = int(self.configReader.getGPSDeviceBaud())
+        mapsURL = self.configReader.getMapsURL()
         self.scannerID = self.configReader.getScannerID()
         self.updateDelay = int(self.configReader.getGT06ServerUpdateDelay())
 
@@ -50,6 +55,11 @@ class GT06ScannerClient():
 
         if updateDelayIn:
             self.updateDelay = int(updateDelayIn)
+
+        if mapsURL:
+            self.displayLocation = displayLocation.DisplayLocation(
+                mapsURL
+            )
 
         self.gt06Client = gt06Client.GT06Client(
             serverAddress,
@@ -155,20 +165,54 @@ class GT06ScannerClient():
                 pass
 
             return returnMessage
-            
+
+        def makeLatLongFromHash(hashIn):
+
+            latitude = hashIn["latitude"]
+            latitudeDir = hashIn["latitudeDir"]
+            longitude = hashIn["longitude"]
+            longitudeDir = hashIn["longitudeDir"]
+
+            if longitudeDir == "E":
+                longitude *= 1
+            elif longitudeDir == "W":
+                longitude *= -1
+            else:
+                raise ValueError("Longitude direction is invalid.")
+
+            if latitudeDir == "S":
+                latitude *= -1
+            elif latitudeDir == "N":
+                latitude *= 1
+            else:
+                raise ValueError("Latitude direction is invalid.")
+
+            return (latitude, longitude)
+
+        currTime = datetime.datetime.now()
+        prevTime = None
+
         while True:
+
+            prevTime = currTime
+            print("Scanning . . .")
+
             locationHash = self.gpsScanner.getLocationHash()
             gpsMessage = makeGPSMessageFromHash(
                 locationHash
             )
-            print("Scanning . . .")
+            latitude, longitude = makeLatLongFromHash(
+                locationHash
+            )
             if gpsMessage:
                 self.gt06Client.sendGPSMessage(gpsMessage)
-                print(locationHash)
-            time.sleep(
-                self.updateDelay
-            )
+                self.displayLocation(latitude, longitude)
+
+            while (currTime - prevTime).seconds < self.updateDelay:
+                currTime = datetime.datetime.now()
+                time.sleep(1)
 
     def disconnectDevices(self):
+        self.displayLocation.closeDisplay()
         self.gpsScanner.stopLocate()
         self.gt06Client.disconnect()
