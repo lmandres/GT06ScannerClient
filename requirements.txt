@@ -1,2 +1,4 @@
 CRC-ITU==0.3.3
+pygame==1.9.6
 pyserial==2.6
+requests==2.24.0

@@ -41,7 +41,7 @@ class DisplayLocation():
 
         return mapImg	
 
-    displayMapsCoord(self, latitude, longitude):
+    def displayMapsCoord(self, latitude, longitude):
 
         try:
             mapImg = self.getMapImg(

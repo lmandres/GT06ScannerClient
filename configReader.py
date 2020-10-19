@@ -56,3 +56,6 @@ class ConfigReader():
         except:
             pass
         return returnValue
+
+    def getMapsURL(self):
+        return self.getTextByXPath(".//DisplaySettings/MapsURL")
