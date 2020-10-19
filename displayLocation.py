@@ -21,7 +21,10 @@ class DisplayLocation():
             self.mapsURL = mapsURLIn
 
         pygame.init()
-        self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode(
+            (0,0),
+            pygame.FULLSCREEN
+        )
         self.font = pygame.font.Font(None, 36)
 
         self.displayWidth = self.screen.get_width()
