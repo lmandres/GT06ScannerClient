@@ -56,10 +56,9 @@ class GT06ScannerClient():
         if updateDelayIn:
             self.updateDelay = int(updateDelayIn)
 
-        if mapsURL:
-            self.displayLocation = displayLocation.DisplayLocation(
-                mapsURL
-            )
+        self.displayLocation = displayLocation.DisplayLocation(
+            mapsURL
+        )
 
         self.gt06Client = gt06Client.GT06Client(
             serverAddress,
@@ -168,24 +167,32 @@ class GT06ScannerClient():
 
         def makeLatLongFromHash(hashIn):
 
-            latitude = hashIn["latitude"]
-            latitudeDir = hashIn["latitudeDir"]
-            longitude = hashIn["longitude"]
-            longitudeDir = hashIn["longitudeDir"]
+            latitude = None
+            longitude = None
 
-            if longitudeDir == "E":
-                longitude *= 1
-            elif longitudeDir == "W":
-                longitude *= -1
-            else:
-                raise ValueError("Longitude direction is invalid.")
+            try:
 
-            if latitudeDir == "S":
-                latitude *= -1
-            elif latitudeDir == "N":
-                latitude *= 1
-            else:
-                raise ValueError("Latitude direction is invalid.")
+                latitude = hashIn["latitude"]
+                latitudeDir = hashIn["latitudeDir"]
+                longitude = hashIn["longitude"]
+                longitudeDir = hashIn["longitudeDir"]
+
+                if longitudeDir == "E":
+                    longitude *= 1
+                elif longitudeDir == "W":
+                    longitude *= -1
+                else:
+                    raise ValueError("Longitude direction is invalid.")
+
+                if latitudeDir == "S":
+                    latitude *= -1
+                elif latitudeDir == "N":
+                    latitude *= 1
+                else:
+                    raise ValueError("Latitude direction is invalid.")
+
+            except:
+                pass
 
             return (latitude, longitude)
 
@@ -198,6 +205,7 @@ class GT06ScannerClient():
             print("Scanning . . .")
 
             locationHash = self.gpsScanner.getLocationHash()
+            print(locationHash)
             gpsMessage = makeGPSMessageFromHash(
                 locationHash
             )
@@ -206,7 +214,7 @@ class GT06ScannerClient():
             )
             if gpsMessage:
                 self.gt06Client.sendGPSMessage(gpsMessage)
-                self.displayLocation(latitude, longitude)
+            self.displayLocation.displayMapCoords(latitude, longitude)
 
             while (currTime - prevTime).seconds < self.updateDelay:
                 currTime = datetime.datetime.now()

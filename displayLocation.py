@@ -1,4 +1,4 @@
-from io import BytesIO
+import io
 
 import pygame
 import requests
@@ -21,27 +21,30 @@ class DisplayLocation():
             self.mapsURL = mapsURLIn
 
         pygame.init()
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         self.font = pygame.font.Font(None, 36)
 
-        self.displayWidth = screen.get_width()
-        self.displayHeight = screen.get_height()
+        self.displayWidth = self.screen.get_width()
+        self.displayHeight = self.screen.get_height()
 
     def getMapImg(self, latitude, longitude):
 
-        url = (
-            self.mapsURL +
-            "/" +
-            str(longitude) + "," + str(latitude) + ",15/" +
-            str(self.displayWidth) + "x" + str(self.displayHeight) +
-	    ".png"
+        url = self.mapsURL + "/{:f},{:f},{}/{}x{}.png".format(
+            longitude,
+            latitude,
+            15,
+            self.displayWidth,
+            self.displayHeight
         )
-        resp = requests.get(url) 
-        mapImg = pygame.image.load(BytesIO(resp.content))
+        print(url)
+        resp = requests.get(url)
+        mapImg = pygame.image.load(
+            io.BytesIO(resp.content)
+        )
 
         return mapImg	
 
-    def displayMapsCoord(self, latitude, longitude):
+    def displayMapCoords(self, latitude, longitude):
 
         try:
             mapImg = self.getMapImg(
@@ -58,22 +61,19 @@ class DisplayLocation():
                 10,
                 2
             ) 
-            screen.blit(mapImg, (0, 0))
+            self.screen.blit(mapImg, (0, 0))
         except Exception as ex:
-            screen.fill((0, 0, 0))
-            text = font.render(str(ex), False, (255, 255, 255))
-            screen.blit(text, [0, 0])
+            self.screen.fill((0, 0, 0))
+            text = self.font.render(str(ex), False, (255, 255, 255))
+            self.screen.blit(text, [0, 0])
+        finally:
+            pygame.display.flip()
 
-        doExit = False
-        pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                doExit = True
+                raise KeyboardInterrupt
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                doExit = True
-        if doExit:
-            pygame.quit()
-            raise KeyboardInterrupt
+                raise KeyboardInterrupt
 
     def closeDisplay(self):
         pygame.quit()
