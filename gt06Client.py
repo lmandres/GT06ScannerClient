@@ -1,5 +1,6 @@
 import codecs
 import socket
+import logging, sys
 
 import crc_itu
 
@@ -39,8 +40,12 @@ class GT06Client():
         self.timeOut = timeOut
 
     def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.serverAddress, self.serverPort))
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((self.serverAddress, self.serverPort))
+        except OSError as e:
+            logging.exception(f"Cannot connect to {self.serverAddress}:{self.serverPort}")
+            sys.exit(255)
         self.socket.settimeout(self.timeOut)
 
     def disconnect(self):

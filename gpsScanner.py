@@ -61,7 +61,8 @@ class GPSScanner():
 
     def stopLocate(self):
         self.runLocationThread = False
-        self.gpsSerial.close()
+        if self.gpsSerial is not None:
+            self.gpsSerial.close()
 
     def doDecodeGPS(self):
 

@@ -1,4 +1,5 @@
 from xml.etree import ElementTree
+import logging, codecs, sys
 
 
 class ConfigReader():
@@ -19,7 +20,13 @@ class ConfigReader():
         return returnValue
 
     def getScannerID(self):
-        return self.getTextByXPath(".//ScannerIDNumber")
+        scannerID = self.getTextByXPath(".//ScannerIDNumber")
+        try:
+            bytes.fromhex(scannerID)
+        except ValueError:
+           logging.exception("ScannerID is expected to be HEX value")
+           sys.exit(255)
+        return scannerID
 
     def getGT06ServerHostname(self):
         return self.getTextByXPath(".//GT06ClientSettings/Hostname")
