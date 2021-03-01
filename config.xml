@@ -10,4 +10,8 @@
         <Port>/dev/ttyUSB0</Port>
         <Baud>4800</Baud>
     </GPSSettings>
+    <DisplaySettings>
+        <MapsURL>https://c.tile.openstreetmap.org</MapsURL>
+        <Zoom>18</Zoom>
+    </DisplaySettings>
 </ScannerSettings>
