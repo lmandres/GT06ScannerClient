@@ -29,7 +29,8 @@ class GT06ScannerClient():
         updateDelayIn=None,
         gpsPortIn=None,
         gpsBaudIn=None,
-        mapsURLIn=None
+        mapsURLIn=None,
+        mapsZoomIn=None
     ):
         self.configReader = configReader.ConfigReader(configFile)
         serverAddress = self.configReader.getGT06ServerHostname()
@@ -37,6 +38,7 @@ class GT06ScannerClient():
         gpsPort = self.configReader.getGPSDevicePort()
         gpsBaud = int(self.configReader.getGPSDeviceBaud())
         mapsURL = self.configReader.getMapsURL()
+        mapsZoom = int(self.configReader.getMapsZoom())
         self.scannerID = self.configReader.getScannerID()
         self.updateDelay = int(self.configReader.getGT06ServerUpdateDelay())
 
@@ -56,7 +58,12 @@ class GT06ScannerClient():
         if updateDelayIn:
             self.updateDelay = int(updateDelayIn)
 
-        if mapsURL:
+        if mapsURL and mapsZoom != None:
+            self.displayLocation = displayLocation.DisplayLocation(
+                mapsURL,
+                mapsZoom
+            )
+        elif mapsURL:
             self.displayLocation = displayLocation.DisplayLocation(
                 mapsURL
             )

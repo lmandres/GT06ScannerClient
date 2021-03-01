@@ -125,7 +125,7 @@ class GPSScanner():
 
         except IndexError:
             pass
-        except ValuerError:
+        except ValueError:
             pass
 
         return returnHash

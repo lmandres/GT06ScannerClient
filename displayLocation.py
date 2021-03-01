@@ -1,4 +1,5 @@
 import io
+import math
 
 import pygame
 import requests
@@ -8,6 +9,8 @@ class DisplayLocation():
 
     
     mapsURL = None
+    mapZoom = None
+    currMaps = {}
 
     screen = None
     font = None
@@ -15,7 +18,7 @@ class DisplayLocation():
     displayHeight = None
 
 
-    def __init__(self, mapsURLIn):
+    def __init__(self, mapsURLIn, mapsZoomIn=15):
 
         if mapsURLIn:
             self.mapsURL = mapsURLIn
@@ -30,14 +33,23 @@ class DisplayLocation():
         self.displayWidth = self.screen.get_width()
         self.displayHeight = self.screen.get_height()
 
-    def getMapImg(self, latitude, longitude):
+        self.mapZoom = mapsZoomIn
 
-        url = self.mapsURL + "/{:f},{:f},{}/{}x{}.png".format(
-            longitude,
-            latitude,
-            15,
-            self.displayWidth,
-            self.displayHeight
+    def degToTileNumber(self, latitude, longitude, zoom):
+        
+        lat_rad = math.radians(latitude)
+        n = 2.0 ** zoom
+        xtile = (longitude + 180.0) / 360.0 * n
+        ytile = (1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n
+
+        return (xtile, ytile)
+
+    def getMapImg(self, xtile, ytile, zoom): 
+
+        url = self.mapsURL + "/{}/{}/{}.png".format(
+            zoom,
+            xtile,
+            ytile
         )
         print(url)
         resp = requests.get(url)
@@ -50,21 +62,56 @@ class DisplayLocation():
     def displayMapCoords(self, latitude, longitude):
 
         try:
-            mapImg = self.getMapImg(
-                latitude,
-                longitude
-            )
-            pygame.draw.circle(
-                mapImg,
-                (0, 0, 255),
-                (
-                    round(self.displayWidth/2),
-                    round(self.displayHeight/2)
-                ),
-                10,
-                2
-            ) 
-            self.screen.blit(mapImg, (0, 0))
+            fltxtile, fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
+            offsetx = 256*(fltxtile-int(fltxtile))
+            offsety = 256*(fltytile-int(fltytile))
+
+            prevMaps = self.currMaps
+            self.currMaps = {}
+
+            for x in range(
+                -round(self.displayWidth/256/2)-2,
+                round(self.displayWidth/256/2)+2,
+                1
+            ):
+                for y in range(
+                    -round(self.displayWidth/256/2)-2,
+                    round(self.displayHeight/256/2)+2,
+                    1
+                ):
+                    if (int(fltxtile)+x) not in self.currMaps.keys():
+                        self.currMaps[int(fltxtile)+x] = {}
+                        if (int(fltytile)+y) not in self.currMaps[int(fltxtile)+x].keys():
+                            self.currMaps[int(fltxtile)+x][int(fltytile)+y] = None
+                    if (
+                        (int(fltxtile)+x) in prevMaps.keys() and
+                        (int(fltytile)+y) in prevMaps[int(fltxtile)+x].keys()
+                    ):
+                        self.currMaps[int(fltxtile)+x][int(fltytile)+y] = prevMaps[int(fltxtile)+x][int(fltytile)+y]
+                    else:
+                        self.currMaps[int(fltxtile)+x][int(fltytile)+y] = self.getMapImg(
+                            int(fltxtile) + x,
+                            int(fltytile) + y,
+                            self.mapZoom
+                        )
+                    
+                    self.screen.blit(
+                        self.currMaps[int(fltxtile)+x][int(fltytile)+y],
+                        (
+                            round(self.displayWidth/2) + x*256 - offsetx,
+                            round(self.displayHeight/2) + y*256 - offsety
+                        )
+                    )
+                    pygame.draw.circle(
+                        self.screen,
+                        (0, 0, 255),
+                        (
+                            round(self.displayWidth/2),
+                            round(self.displayHeight/2)
+                        ),
+                        10,
+                        2
+                    )
         except Exception as ex:
             self.screen.fill((0, 0, 0))
             text = self.font.render(str(ex), False, (255, 255, 255))

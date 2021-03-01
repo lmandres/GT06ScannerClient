@@ -52,6 +52,11 @@ if __name__ == "__main__":
         "--maps_url",
         help="URL for map tile server images."
     )
+    parser.add_argument(
+        "-z",
+        "--zoom",
+        help="Zoom for tile server images."
+    )
     args = parser.parse_args()
     print(args)
     
@@ -63,7 +68,8 @@ if __name__ == "__main__":
         updateDelayIn=args.update_delay,
         gpsPortIn=args.gps_port,
         gpsBaudIn=args.gps_baud,
-        mapsURLIn=args.maps_url
+        mapsURLIn=args.maps_url,
+        mapsZoomIn=args.zoom
     )
     try:
         scanner.connectDevices()

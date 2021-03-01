@@ -66,3 +66,13 @@ class ConfigReader():
 
     def getMapsURL(self):
         return self.getTextByXPath(".//DisplaySettings/MapsURL")
+
+    def getMapsZoom(self):
+        returnValue = None
+        try:
+            returnValue = int(
+                self.getTextByXPath(".//DisplaySettings/Zoom")
+            )
+        except:
+            pass
+        return returnValue
