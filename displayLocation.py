@@ -49,8 +49,8 @@ class DisplayLocation():
     def getMapImg(self, xtile, ytile, zoom):
 
         magstr = ""
-        if magnification > 1:
-            magstr = "@{}".format(magnification)
+        if self.magnification > 1:
+            magstr = "@{}".format(self.magnification)
 
         url = self.mapsURL + "/{}/{}/{}{}.png".format(
             zoom,
@@ -71,20 +71,20 @@ class DisplayLocation():
         try:
 
             fltxtile, fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
-            offsetx = magnification*256*(fltxtile-int(fltxtile))
-            offsety = magnification*256*(fltytile-int(fltytile))
+            offsetx = self.magnification*256*(fltxtile-int(fltxtile))
+            offsety = self.magnification*256*(fltytile-int(fltytile))
 
             prevMaps = self.currMaps
             self.currMaps = {}
 
             for x in range(
-                -round(self.displayWidth*magnification/256/2)-2,
-                round(self.displayWidth*magnification/256/2)+2,
+                -round(self.displayWidth*self.magnification/256/2)-2,
+                round(self.displayWidth*self.magnification/256/2)+2,
                 1
             ):
                 for y in range(
-                    -round(self.displayWidth*magnification/256/2)-2,
-                    round(self.displayHeight*magnification/256/2)+2,
+                    -round(self.displayWidth*self.magnification/256/2)-2,
+                    round(self.displayHeight*self.magnification/256/2)+2,
                     1
                 ):
                     if (int(fltxtile)+x) not in self.currMaps.keys():
@@ -106,8 +106,8 @@ class DisplayLocation():
                     self.screen.blit(
                         self.currMaps[int(fltxtile)+x][int(fltytile)+y],
                         (
-                            round(self.displayWidth/2) + magnification*x*256 - offsetx,
-                            round(self.displayHeight/2) + magnification*y*256 - offsety
+                            round(self.displayWidth/2) + self.magnification*x*256 - offsetx,
+                            round(self.displayHeight/2) + self.magnification*y*256 - offsety
                         )
                     )
                     pygame.draw.circle(
