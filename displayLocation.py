@@ -50,7 +50,7 @@ class DisplayLocation():
 
         magstr = ""
         if self.magnification > 1:
-            magstr = "@{}".format(self.magnification)
+            magstr = "@{}x".format(self.magnification)
 
         url = self.mapsURL + "/{}/{}/{}{}.png".format(
             zoom,
@@ -78,13 +78,13 @@ class DisplayLocation():
             self.currMaps = {}
 
             for x in range(
-                -round(self.displayWidth*self.magnification/256/2)-2,
-                round(self.displayWidth*self.magnification/256/2)+2,
+                -round(self.displayWidth/(self.magnification*256)/2)-2,
+                round(self.displayWidth/(self.magnification*256)/2)+2,
                 1
             ):
                 for y in range(
-                    -round(self.displayWidth*self.magnification/256/2)-2,
-                    round(self.displayHeight*self.magnification/256/2)+2,
+                    -round(self.displayWidth/(self.magnification*256)/2)-2,
+                    round(self.displayHeight/(self.magnification*256)/2)+2,
                     1
                 ):
                     if (int(fltxtile)+x) not in self.currMaps.keys():
