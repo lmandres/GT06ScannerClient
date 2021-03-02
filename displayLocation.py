@@ -46,11 +46,11 @@ class DisplayLocation():
 
         return (xtile, ytile)
 
-    def getMapImg(self, xtile, ytile, zoom):
+    def getMapImg(self, xtile, ytile, zoom, magnification):
 
         magstr = ""
-        if self.magnification > 1:
-            magstr = "@{}x".format(self.magnification)
+        if magnification > 1:
+            magstr = "@{}x".format(magnification)
 
         url = self.mapsURL + "/{}/{}/{}{}.png".format(
             zoom,
@@ -71,20 +71,20 @@ class DisplayLocation():
         try:
 
             fltxtile, fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
-            offsetx = self.magnification*256*(fltxtile-int(fltxtile))
-            offsety = self.magnification*256*(fltytile-int(fltytile))
+            offsetx = int(self.magnification*256.0*(fltxtile-math.floor(fltxtile)))
+            offsety = int(self.magnification*256.0*(fltytile-math.floor(fltytile)))
 
             prevMaps = self.currMaps
             self.currMaps = {}
 
             for x in range(
                 -round(self.displayWidth/(self.magnification*256)/2)-2,
-                round(self.displayWidth/(self.magnification*256)/2)+2,
+                round(self.displayWidth/(self.magnification*256)/2)+3,
                 1
             ):
                 for y in range(
                     -round(self.displayWidth/(self.magnification*256)/2)-2,
-                    round(self.displayHeight/(self.magnification*256)/2)+2,
+                    round(self.displayHeight/(self.magnification*256)/2)+3,
                     1
                 ):
                     if (int(fltxtile)+x) not in self.currMaps.keys():
@@ -100,7 +100,8 @@ class DisplayLocation():
                         self.currMaps[int(fltxtile)+x][int(fltytile)+y] = self.getMapImg(
                             int(fltxtile) + x,
                             int(fltytile) + y,
-                            self.mapZoom
+                            self.mapZoom,
+                            self.magnification
                         )
                     
                     self.screen.blit(
@@ -110,16 +111,16 @@ class DisplayLocation():
                             round(self.displayHeight/2) + self.magnification*y*256 - offsety
                         )
                     )
-                    pygame.draw.circle(
-                        self.screen,
-                        (0, 0, 255),
-                        (
-                            round(self.displayWidth/2),
-                            round(self.displayHeight/2)
-                        ),
-                        10,
-                        2
-                    )
+            pygame.draw.circle(
+                self.screen,
+                (0, 0, 255),
+                (
+                    round(self.displayWidth/2),
+                    round(self.displayHeight/2)
+                ),
+                10,
+                2
+            )
         except TypeError as te:
             self.screen.fill((0, 0, 0))
             text = self.font.render("Loading map . . .", False, (255, 255, 255))
