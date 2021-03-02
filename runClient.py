@@ -53,6 +53,11 @@ if __name__ == "__main__":
         help="URL for map tile server images."
     )
     parser.add_argument(
+        "-x",
+        "--magnification",
+        help="Magnification for tile server images."
+    )
+    parser.add_argument(
         "-z",
         "--zoom",
         help="Zoom for tile server images."
@@ -69,7 +74,8 @@ if __name__ == "__main__":
         gpsPortIn=args.gps_port,
         gpsBaudIn=args.gps_baud,
         mapsURLIn=args.maps_url,
-        mapsZoomIn=args.zoom
+        mapsZoomIn=args.zoom,
+        mapsMagnificationIn=args.magnification
     )
     try:
         scanner.connectDevices()

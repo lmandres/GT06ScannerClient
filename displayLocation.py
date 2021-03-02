@@ -10,6 +10,7 @@ class DisplayLocation():
     
     mapsURL = None
     mapZoom = None
+    magnification = None
     currMaps = {}
 
     screen = None
@@ -18,7 +19,7 @@ class DisplayLocation():
     displayHeight = None
 
 
-    def __init__(self, mapsURLIn, mapsZoomIn=15):
+    def __init__(self, mapsURLIn, mapsZoomIn=15, mapsMagnificationIn=1):
 
         if mapsURLIn:
             self.mapsURL = mapsURLIn
@@ -34,6 +35,7 @@ class DisplayLocation():
         self.displayHeight = self.screen.get_height()
 
         self.mapZoom = mapsZoomIn
+        self.magnification = mapsMagnificationIn
 
     def degToTileNumber(self, latitude, longitude, zoom):
         
@@ -44,12 +46,17 @@ class DisplayLocation():
 
         return (xtile, ytile)
 
-    def getMapImg(self, xtile, ytile, zoom): 
+    def getMapImg(self, xtile, ytile, zoom):
 
-        url = self.mapsURL + "/{}/{}/{}.png".format(
+        magstr = ""
+        if magnification > 1:
+            magstr = "@{}".format(magnification)
+
+        url = self.mapsURL + "/{}/{}/{}{}.png".format(
             zoom,
             xtile,
-            ytile
+            ytile,
+            magstr
         )
         print(url)
         resp = requests.get(url)
@@ -64,20 +71,20 @@ class DisplayLocation():
         try:
 
             fltxtile, fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
-            offsetx = 256*(fltxtile-int(fltxtile))
-            offsety = 256*(fltytile-int(fltytile))
+            offsetx = magnification*256*(fltxtile-int(fltxtile))
+            offsety = magnification*256*(fltytile-int(fltytile))
 
             prevMaps = self.currMaps
             self.currMaps = {}
 
             for x in range(
-                -round(self.displayWidth/256/2)-2,
-                round(self.displayWidth/256/2)+2,
+                -round(self.displayWidth*magnification/256/2)-2,
+                round(self.displayWidth*magnification/256/2)+2,
                 1
             ):
                 for y in range(
-                    -round(self.displayWidth/256/2)-2,
-                    round(self.displayHeight/256/2)+2,
+                    -round(self.displayWidth*magnification/256/2)-2,
+                    round(self.displayHeight*magnification/256/2)+2,
                     1
                 ):
                     if (int(fltxtile)+x) not in self.currMaps.keys():
@@ -99,8 +106,8 @@ class DisplayLocation():
                     self.screen.blit(
                         self.currMaps[int(fltxtile)+x][int(fltytile)+y],
                         (
-                            round(self.displayWidth/2) + x*256 - offsetx,
-                            round(self.displayHeight/2) + y*256 - offsety
+                            round(self.displayWidth/2) + magnification*x*256 - offsetx,
+                            round(self.displayHeight/2) + magnification*y*256 - offsety
                         )
                     )
                     pygame.draw.circle(

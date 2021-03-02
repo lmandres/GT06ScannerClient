@@ -76,3 +76,13 @@ class ConfigReader():
         except:
             pass
         return returnValue
+
+    def getMapsMagnification(self):
+        returnValue = None
+        try:
+            returnValue = int(
+                self.getTextByXPath(".//DisplaySettings/Magnification")
+            )
+        except:
+            pass
+        return returnValue
