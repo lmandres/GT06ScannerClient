@@ -131,14 +131,14 @@ class DisplayLocation():
                 10,
                 2
             )
-        #except TypeError as te:
-        #    self.screen.fill((0, 0, 0))
-        #    text = self.font.render("Loading map . . .", False, (255, 255, 255))
-        #    self.screen.blit(text, (0, 0))
-        #except Exception as ex:
-        #    self.screen.fill((0, 0, 0))
-        #    text = self.font.render(str(ex), False, (255, 0, 0))
-        #    self.screen.blit(text, (0, 0))
+        except TypeError as te:
+            self.screen.fill((0, 0, 0))
+            text = self.font.render("Loading map . . .", False, (255, 255, 255))
+            self.screen.blit(text, (0, 0))
+        except Exception as ex:
+            self.screen.fill((0, 0, 0))
+            text = self.font.render(str(ex), False, (255, 0, 0))
+            self.screen.blit(text, (0, 0))
         finally:
             pygame.display.flip()
             self.deleteMapKeys()
