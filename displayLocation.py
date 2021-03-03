@@ -70,7 +70,6 @@ class DisplayLocation():
             ytile,
             magstr
         )
-        print(url)
         resp = requests.get(url)
         mapImg = pygame.image.load(
             io.BytesIO(resp.content)
