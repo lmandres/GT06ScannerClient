@@ -1,5 +1,7 @@
+import copy
 import io
 import math
+import threading
 
 import pygame
 import requests
@@ -12,6 +14,10 @@ class DisplayLocation():
     mapZoom = None
     magnification = None
     currMaps = {}
+    runMapThread = False
+    mapThread = None
+    fltxtile = None
+    ftlytile = None
 
     screen = None
     font = None
@@ -36,6 +42,12 @@ class DisplayLocation():
 
         self.mapZoom = mapsZoomIn
         self.magnification = mapsMagnificationIn
+
+        self.runMapThread = True
+        self.mapThread = threading.Thread(
+            target=self.runLoadMapsThread
+        )
+        self.mapThread.start()
 
     def degToTileNumber(self, latitude, longitude, zoom):
         
@@ -70,47 +82,46 @@ class DisplayLocation():
 
         try:
 
-            fltxtile, fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
-            offsetx = int(self.magnification*256.0*(fltxtile-math.floor(fltxtile)))
-            offsety = int(self.magnification*256.0*(fltytile-math.floor(fltytile)))
-
-            prevMaps = self.currMaps
-            self.currMaps = {}
+            self.fltxtile, self.fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
+            offsetx = int(self.magnification*256.0*(self.fltxtile-math.floor(self.fltxtile)))
+            offsety = int(self.magnification*256.0*(self.fltytile-math.floor(self.fltytile)))
 
             for x in range(
-                -round(self.displayWidth/(self.magnification*256)/2)-2,
-                round(self.displayWidth/(self.magnification*256)/2)+3,
+                -math.floor(self.displayWidth/(self.magnification*256)/2)-2,
+                math.ceil(self.displayWidth/(self.magnification*256)/2)+3,
                 1
             ):
                 for y in range(
-                    -round(self.displayWidth/(self.magnification*256)/2)-2,
-                    round(self.displayHeight/(self.magnification*256)/2)+3,
+                    -math.floor(self.displayWidth/(self.magnification*256)/2)-2,
+                    math.ceil(self.displayHeight/(self.magnification*256)/2)+3,
                     1
                 ):
-                    if (int(fltxtile)+x) not in self.currMaps.keys():
-                        self.currMaps[int(fltxtile)+x] = {}
-                        if (int(fltytile)+y) not in self.currMaps[int(fltxtile)+x].keys():
-                            self.currMaps[int(fltxtile)+x][int(fltytile)+y] = None
-                    if (
-                        (int(fltxtile)+x) in prevMaps.keys() and
-                        (int(fltytile)+y) in prevMaps[int(fltxtile)+x].keys()
-                    ):
-                        self.currMaps[int(fltxtile)+x][int(fltytile)+y] = prevMaps[int(fltxtile)+x][int(fltytile)+y]
-                    else:
-                        self.currMaps[int(fltxtile)+x][int(fltytile)+y] = self.getMapImg(
-                            int(fltxtile) + x,
-                            int(fltytile) + y,
-                            self.mapZoom,
-                            self.magnification
+
+                    if (int(self.fltxtile)+x) not in self.currMaps.keys():
+                        self.currMaps[int(self.fltxtile)+x] = {}
+                    if (int(self.fltytile)+y) not in self.currMaps[int(self.fltxtile)+x].keys():
+                        self.currMaps[int(self.fltxtile)+x][int(self.fltytile)+y] = None
+
+                    try:
+                        self.screen.blit(
+                            self.currMaps[int(self.fltxtile)+x][int(self.fltytile)+y],
+                            (
+                                round(self.displayWidth/2) + self.magnification*x*256 - offsetx,
+                                round(self.displayHeight/2) + self.magnification*y*256 - offsety
+                            )
+                        )
+                    except:
+                        pygame.draw.rect(
+                            self.screen,
+                            (0, 0, 0),
+                            (
+                                round(self.displayWidth/2) + self.magnification*x*256 - offsetx,
+                                round(self.displayHeight/2) + self.magnification*y*256 - offsety,
+                                self.magnification*256,
+                                self.magnification*256
+                            )
                         )
                     
-                    self.screen.blit(
-                        self.currMaps[int(fltxtile)+x][int(fltytile)+y],
-                        (
-                            round(self.displayWidth/2) + self.magnification*x*256 - offsetx,
-                            round(self.displayHeight/2) + self.magnification*y*256 - offsety
-                        )
-                    )
             pygame.draw.circle(
                 self.screen,
                 (0, 0, 255),
@@ -121,16 +132,17 @@ class DisplayLocation():
                 10,
                 2
             )
-        except TypeError as te:
-            self.screen.fill((0, 0, 0))
-            text = self.font.render("Loading map . . .", False, (255, 255, 255))
-            self.screen.blit(text, (0, 0))
-        except Exception as ex:
-            self.screen.fill((0, 0, 0))
-            text = self.font.render(str(ex), False, (255, 0, 0))
-            self.screen.blit(text, (0, 0))
+        #except TypeError as te:
+        #    self.screen.fill((0, 0, 0))
+        #    text = self.font.render("Loading map . . .", False, (255, 255, 255))
+        #    self.screen.blit(text, (0, 0))
+        #except Exception as ex:
+        #    self.screen.fill((0, 0, 0))
+        #    text = self.font.render(str(ex), False, (255, 0, 0))
+        #    self.screen.blit(text, (0, 0))
         finally:
             pygame.display.flip()
+            self.deleteMapKeys()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -138,5 +150,61 @@ class DisplayLocation():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 raise KeyboardInterrupt
 
+    def runLoadMapsThread(self):
+
+        while self.runMapThread:
+
+            prevMaps = self.currMaps.copy()
+            for xkey in prevMaps.keys():
+                try:
+                    prevMaps[xkey] = self.currMaps[xkey].copy()
+                except:
+                    pass
+
+            for xkey in prevMaps.keys(): 
+                for ykey in prevMaps[xkey].keys():
+                    if not prevMaps[xkey][ykey]:
+                        prevMaps[xkey][ykey] = self.getMapImg(
+                            xkey,
+                            ykey,
+                            self.mapZoom,
+                            self.magnification
+                        )
+
+            self.currMaps = prevMaps
+
+    def deleteMapKeys(self):
+
+        delkeys = []
+
+        for xkey in self.currMaps.keys():
+            for ykey in self.currMaps[xkey].keys():
+                if (
+                    ykey < math.floor(self.fltytile)-math.floor(self.displayHeight/(self.magnification*256)/2)-3 or
+                    math.ceil(self.fltytile)+math.ceil(self.displayHeight/(self.magnification*256)/2)+4 < ykey
+                ):
+                    delkeys.append((xkey, ykey,))
+                if (
+                    xkey < math.floor(self.fltxtile)-math.floor(self.displayWidth/(self.magnification*256)/2)-3 or
+                    math.ceil(self.fltxtile)+math.ceil(self.displayWidth/(self.magnification*256)/2)+4 < xkey
+                ):
+                    delkeys.append((xkey, None,))
+
+        for delkey in delkeys:
+            if delkey[0] and delkey[1]:
+                try:
+                    del self.currMaps[delkey[0]][delkey[1]]
+                except:
+                    pass
+            elif delkey[0] and not delkey[1]:
+                try:
+                    del self.currMaps[delkey[0]]
+                except:
+                    pass
+
+
     def closeDisplay(self):
+        self.runMapThread = False
+        while self.mapThread.is_alive():
+            pass
         pygame.quit()

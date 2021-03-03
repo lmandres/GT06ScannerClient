@@ -1,7 +1,7 @@
-import _thread
 import math
 import re
 import time
+import threading
 
 import serial
 
@@ -57,7 +57,7 @@ class GPSScanner():
         self.runLocationThread = True
 
         self.gpsSerial = serial.Serial(self.serialPort, self.serialBaud)
-        _thread.start_new_thread(doThreadLoop, ())
+        threading.Thread(target=doThreadLoop).start()
 
     def stopLocate(self):
         self.runLocationThread = False
