@@ -171,7 +171,7 @@ class DisplayLocation():
                             self.magnification
                         )
 
-            self.currMaps = prevMaps
+            self.currMaps.update(prevMaps)
 
     def deleteMapKeys(self):
 
