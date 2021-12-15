@@ -13,5 +13,6 @@
     <DisplaySettings>
         <MapsURL>https://c.tile.openstreetmap.org</MapsURL>
         <Zoom>18</Zoom>
+        <Magnification>1</Magnification>
     </DisplaySettings>
 </ScannerSettings>
