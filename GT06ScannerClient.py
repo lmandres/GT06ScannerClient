@@ -230,13 +230,11 @@ class GT06ScannerClient():
 
             return (latitude, longitude)
 
-        currTime = datetime.datetime.now()
         prevTime = None
 
         while True:
 
-            prevTime = currTime
-
+            currTime = datetime.datetime.now()
             locationHash = self.gpsScanner.getLocationHash()
 
             gpsMessage = makeGPSMessageFromHash(
@@ -248,13 +246,17 @@ class GT06ScannerClient():
 
             if self.displayLocation:
                 self.displayLocation.displayMapCoords(latitude, longitude)
+            else:
+                print(locationHash)
 
-            if (currTime - prevTime).seconds < self.updateDelay:
+            if not prevTime or (currTime - prevTime).seconds >= self.updateDelay:
+
+                print("Running after updateDelay . . .")
 
                 if self.gt06Client and gpsMessage:
                     self.gt06Client.sendGPSMessage(gpsMessage)
 
-                currTime = datetime.datetime.now()
+                prevTime = currTime
 
     def disconnectDevices(self):
         if self.displayLocation:

@@ -15,6 +15,8 @@ class GPSScanner():
     locationHash = None
     runLocationThread = None
 
+    gpsCondition = threading.Condition()
+
     def __init__(self, serialPortIn=None, serialBaudIn=None):
         if serialPortIn:
             self.serialPort = serialPortIn
@@ -44,14 +46,24 @@ class GPSScanner():
         self.serialPort = serialPortIn
 
     def getLocationHash(self):
-        return self.locationHash
+
+        self.gpsCondition.acquire()
+        self.gpsCondition.wait()
+        updatedHash = self.locationHash
+        self.gpsCondition.release()
+
+        return updatedHash
 
     def runLocate(self):
 
         def doThreadLoop():
             self.locationHash = self.doDecodeGPS()
             while self.runLocationThread:
-                self.locationHash.update(self.doDecodeGPS())
+                newHash = self.doDecodeGPS()
+                self.gpsCondition.acquire()
+                self.locationHash.update(newHash)
+                self.gpsCondition.notify()
+                self.gpsCondition.release()
 
         self.locationHash = {}
         self.runLocationThread = True
@@ -104,8 +116,6 @@ class GPSScanner():
             returnHash = self.decodeGPGLL(match.group(2).decode('utf-8'))
         elif match.group(1) == b'GPGSV':
             returnHash = self.decodeGPGSV(match.group(2).decode('utf-8'))
-
-        print(returnHash)
 
         return returnHash
 
