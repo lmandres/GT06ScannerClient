@@ -105,6 +105,8 @@ class GPSScanner():
         elif match.group(1) == b'GPGSV':
             returnHash = self.decodeGPGSV(match.group(2).decode('utf-8'))
 
+        print(returnHash)
+
         return returnHash
 
     def decodeGPGLL(self, stringIn):

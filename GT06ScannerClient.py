@@ -35,14 +35,30 @@ class GT06ScannerClient():
     ):
         self.configReader = configReader.ConfigReader(configFile)
         serverAddress = self.configReader.getGT06ServerHostname()
-        serverPort = int(self.configReader.getGT06ServerPort())
         gpsPort = self.configReader.getGPSDevicePort()
         gpsBaud = int(self.configReader.getGPSDeviceBaud())
         mapsURL = self.configReader.getMapsURL()
-        mapsZoom = int(self.configReader.getMapsZoom())
-        mapsMagnification = int(self.configReader.getMapsMagnification())
         self.scannerID = self.configReader.getScannerID()
-        self.updateDelay = int(self.configReader.getGT06ServerUpdateDelay())
+
+        try:
+            serverPort = int(self.configReader.getGT06ServerPort())
+        except TypeError:
+            pass
+
+        try:
+            mapsZoom = int(self.configReader.getMapsZoom())
+        except TypeError:
+            mapsZoom = 16
+
+        try:
+            mapsMagnification = int(self.configReader.getMapsMagnification())
+        except TypeError:
+            mapsMagnification = 1
+
+        try:
+            self.updateDelay = int(self.configReader.getGT06ServerUpdateDelay())
+        except TypeError:
+            self.updateDelay = 1
 
         if serverAddressIn:
             serverAddress = serverAddressIn
@@ -76,10 +92,11 @@ class GT06ScannerClient():
                 mapsURL
             )
 
-        self.gt06Client = gt06Client.GT06Client(
-            serverAddress,
-            serverPort
-        )
+        if serverAddress and serverPort:
+            self.gt06Client = gt06Client.GT06Client(
+                serverAddress,
+                serverPort
+            )
 
         self.gpsScanner = gpsScanner.GPSScanner(
             gpsPort,
@@ -87,11 +104,12 @@ class GT06ScannerClient():
         )
 
     def connectDevices(self):
-        self.gt06Client.connect()
         self.gpsScanner.runLocate()
-        self.gt06Client.sendLoginMessage(
-            self.scannerID
-        )
+        if self.gt06Client:
+            self.gt06Client.connect()
+            self.gt06Client.sendLoginMessage(
+                self.scannerID
+            )
 
     def runScannerClient(self):
 
@@ -218,28 +236,29 @@ class GT06ScannerClient():
         while True:
 
             prevTime = currTime
-            print("Scanning . . .")
 
             locationHash = self.gpsScanner.getLocationHash()
-            print(locationHash)
+
             gpsMessage = makeGPSMessageFromHash(
                 locationHash
             )
             latitude, longitude = makeLatLongFromHash(
                 locationHash
             )
-            if gpsMessage:
-                self.gt06Client.sendGPSMessage(gpsMessage)
 
             if self.displayLocation:
                 self.displayLocation.displayMapCoords(latitude, longitude)
 
-            while (currTime - prevTime).seconds < self.updateDelay:
+            if (currTime - prevTime).seconds < self.updateDelay:
+
+                if self.gt06Client and gpsMessage:
+                    self.gt06Client.sendGPSMessage(gpsMessage)
+
                 currTime = datetime.datetime.now()
-                time.sleep(1)
 
     def disconnectDevices(self):
         if self.displayLocation:
             self.displayLocation.closeDisplay()
+        if self.gt06Client:
+            self.gt06Client.disconnect()
         self.gpsScanner.stopLocate()
-        self.gt06Client.disconnect()

@@ -31,8 +31,10 @@ class DisplayLocation():
             self.mapsURL = mapsURLIn
 
         pygame.init()
+        pygame.display.init()
+
         self.screen = pygame.display.set_mode(
-            (0,0),
+            (0, 0),
             pygame.FULLSCREEN
         )
         self.font = pygame.font.Font(None, 36)
@@ -70,6 +72,7 @@ class DisplayLocation():
             ytile,
             magstr
         )
+
         resp = requests.get(url)
         mapImg = pygame.image.load(
             io.BytesIO(resp.content)
