@@ -14,6 +14,7 @@ class DisplayLocation():
     mapZoom = None
     magnification = None
     currMaps = {}
+    mapsCondition = threading.Condition()
     runMapThread = False
     mapThread = None
     fltxtile = None
@@ -78,11 +79,31 @@ class DisplayLocation():
             io.BytesIO(resp.content)
         )
 
-        return mapImg	
+        return mapImg
+
+    def getMapsCopy(self):
+
+        self.mapsCondition.acquire()
+        self.mapsCondition.wait()
+
+        mapsCopy = self.currMaps.copy()
+        for xkey in mapsCopy.keys():
+            try:
+                mapsCopy[xkey] = self.currMaps[xkey].copy()
+            except:
+                pass
+
+        self.mapsCondition.release()
+
+        return mapsCopy 
 
     def displayMapCoords(self, latitude, longitude):
 
         try:
+
+            currMaps = {}
+            if self.currMaps:
+                currMaps = self.getMapsCopy()
 
             self.fltxtile, self.fltytile = self.degToTileNumber(latitude, longitude, self.mapZoom)
             offsetx = int(self.magnification*256.0*(self.fltxtile-math.floor(self.fltxtile)))
@@ -99,14 +120,14 @@ class DisplayLocation():
                     1
                 ):
 
-                    if (int(self.fltxtile)+x) not in self.currMaps.keys():
-                        self.currMaps[int(self.fltxtile)+x] = {}
-                    if (int(self.fltytile)+y) not in self.currMaps[int(self.fltxtile)+x].keys():
-                        self.currMaps[int(self.fltxtile)+x][int(self.fltytile)+y] = None
+                    if (int(self.fltxtile)+x) not in currMaps.keys():
+                        currMaps[int(self.fltxtile)+x] = {}
+                    if (int(self.fltytile)+y) not in currMaps[int(self.fltxtile)+x].keys():
+                        currMaps[int(self.fltxtile)+x][int(self.fltytile)+y] = None
 
                     try:
                         self.screen.blit(
-                            self.currMaps[int(self.fltxtile)+x][int(self.fltytile)+y],
+                            currMaps[int(self.fltxtile)+x][int(self.fltytile)+y],
                             (
                                 round(self.displayWidth/2) + self.magnification*x*256 - offsetx,
                                 round(self.displayHeight/2) + self.magnification*y*256 - offsety
@@ -144,7 +165,11 @@ class DisplayLocation():
             self.screen.blit(text, (0, 0))
         finally:
             pygame.display.flip()
-            self.deleteMapKeys()
+
+            self.mapsCondition.acquire()
+            self.currMaps.update(currMaps)
+            self.mapsCondition.notify()
+            self.mapsCondition.release()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -154,55 +179,53 @@ class DisplayLocation():
 
     def runLoadMapsThread(self):
 
+        def deleteMapKeys():
+
+            delkeys = []
+
+            for xkey in self.currMaps.keys():
+                for ykey in self.currMaps[xkey].keys():
+                    if (
+                        ykey < math.floor(self.fltytile)-math.floor(self.displayHeight/(self.magnification*256)/2)-3 or
+                        math.ceil(self.fltytile)+math.ceil(self.displayHeight/(self.magnification*256)/2)+4 < ykey
+                    ):
+                        delkeys.append((xkey, ykey,))
+                    if (
+                        xkey < math.floor(self.fltxtile)-math.floor(self.displayWidth/(self.magnification*256)/2)-3 or
+                        math.ceil(self.fltxtile)+math.ceil(self.displayWidth/(self.magnification*256)/2)+4 < xkey
+                    ):
+                        delkeys.append((xkey, None,))
+
+            for delkey in delkeys:
+                if delkey[0] and delkey[1]:
+                    try:
+                        del self.currMaps[delkey[0]][delkey[1]]
+                    except:
+                        pass
+                elif delkey[0] and not delkey[1]:
+                    try:
+                        del self.currMaps[delkey[0]]
+                    except:
+                        pass
+
         while self.runMapThread:
 
-            prevMaps = self.currMaps.copy()
-            for xkey in prevMaps.keys():
-                try:
-                    prevMaps[xkey] = self.currMaps[xkey].copy()
-                except:
-                    pass
+            self.mapsCondition.acquire()
 
-            for xkey in prevMaps.keys(): 
-                for ykey in prevMaps[xkey].keys():
-                    if not prevMaps[xkey][ykey]:
-                        prevMaps[xkey][ykey] = self.getMapImg(
+            for xkey in self.currMaps.keys(): 
+                for ykey in self.currMaps[xkey].keys():
+                    if not self.currMaps[xkey][ykey]:
+                        self.currMaps[xkey][ykey] = self.getMapImg(
                             xkey,
                             ykey,
                             self.mapZoom,
                             self.magnification
                         )
 
-            self.currMaps.update(prevMaps)
+            deleteMapKeys()
 
-    def deleteMapKeys(self):
-
-        delkeys = []
-
-        for xkey in self.currMaps.keys():
-            for ykey in self.currMaps[xkey].keys():
-                if (
-                    ykey < math.floor(self.fltytile)-math.floor(self.displayHeight/(self.magnification*256)/2)-3 or
-                    math.ceil(self.fltytile)+math.ceil(self.displayHeight/(self.magnification*256)/2)+4 < ykey
-                ):
-                    delkeys.append((xkey, ykey,))
-                if (
-                    xkey < math.floor(self.fltxtile)-math.floor(self.displayWidth/(self.magnification*256)/2)-3 or
-                    math.ceil(self.fltxtile)+math.ceil(self.displayWidth/(self.magnification*256)/2)+4 < xkey
-                ):
-                    delkeys.append((xkey, None,))
-
-        for delkey in delkeys:
-            if delkey[0] and delkey[1]:
-                try:
-                    del self.currMaps[delkey[0]][delkey[1]]
-                except:
-                    pass
-            elif delkey[0] and not delkey[1]:
-                try:
-                    del self.currMaps[delkey[0]]
-                except:
-                    pass
+            self.mapsCondition.notify()
+            self.mapsCondition.release()
 
 
     def closeDisplay(self):
